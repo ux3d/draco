@@ -50,7 +50,6 @@ option(ENABLE_WASM "" OFF)
 option(ENABLE_WERROR "" OFF)
 option(ENABLE_WEXTRA "" OFF)
 option(IGNORE_EMPTY_BUILD_TYPE "" OFF)
-option(BUILD_UNITY_PLUGIN "Build plugin library for Unity." OFF)
 option(BUILD_ANIMATION_ENCODING "" OFF)
 option(BUILD_FOR_GLTF "" OFF)
 option(BUILD_USD_PLUGIN "Build plugin library for USD." OFF)
@@ -123,10 +122,6 @@ if(ENABLE_DISTCC)
 endif()
 if(ENABLE_GOMA)
   set_compiler_launcher(ENABLE_GOMA gomacc)
-endif()
-if(BUILD_UNITY_PLUGIN)
-  set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library for unity plugin.")
-  draco_enable_feature(FEATURE "BUILD_UNITY_PLUGIN")
 endif()
 if(BUILD_USD_PLUGIN)
   set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library for USD plugin.")
@@ -654,9 +649,6 @@ set(
 set(draco_version_sources "${draco_build_dir}/draco_version.cc"
                           "${draco_build_dir}/draco_version.h")
 
-set(draco_unity_plug_sources "${draco_src_root}/unity/draco_unity_plugin.cc"
-                             "${draco_src_root}/unity/draco_unity_plugin.h")
-
 include_directories("${draco_root}/src" "${draco_build_dir}")
 
 #
@@ -933,10 +925,6 @@ else()
   add_library(draco_points_enc OBJECT ${draco_points_common_sources}
                                ${draco_points_enc_sources})
 
-  if(BUILD_UNITY_PLUGIN)
-    add_library(draco_unity_plugin OBJECT ${draco_unity_plug_sources})
-  endif()
-
   # Library targets that consume the object collections.
   add_library(dracodec
               ${draco_version_sources}
@@ -1005,35 +993,6 @@ else()
               $<TARGET_OBJECTS:draco_point_cloud>
               $<TARGET_OBJECTS:draco_points_dec>
               $<TARGET_OBJECTS:draco_points_enc>)
-  if(BUILD_UNITY_PLUGIN)
-    set(UNITY_TYPE MODULE)
-    if(IOS)
-      set(UNITY_TYPE STATIC)
-    endif()
-    add_library(dracodec_unity
-                ${UNITY_TYPE}
-                ${draco_version_sources}
-                $<TARGET_OBJECTS:draco_attributes>
-                $<TARGET_OBJECTS:draco_compression_attributes_dec>
-                $<TARGET_OBJECTS:draco_compression_bit_coders>
-                $<TARGET_OBJECTS:draco_compression_decode>
-                $<TARGET_OBJECTS:draco_compression_entropy>
-                $<TARGET_OBJECTS:draco_compression_mesh_dec>
-                $<TARGET_OBJECTS:draco_compression_point_cloud_dec>
-                $<TARGET_OBJECTS:draco_core>
-                $<TARGET_OBJECTS:draco_dec_config>
-                $<TARGET_OBJECTS:draco_io>
-                $<TARGET_OBJECTS:draco_mesh>
-                $<TARGET_OBJECTS:draco_metadata>
-                $<TARGET_OBJECTS:draco_metadata_dec>
-                $<TARGET_OBJECTS:draco_point_cloud>
-                $<TARGET_OBJECTS:draco_points_dec>
-                $<TARGET_OBJECTS:draco_unity_plugin>)
-    # For Mac, we need to build a .bundle for plugin.
-    if(APPLE)
-      set_target_properties(dracodec_unity PROPERTIES BUNDLE true)
-    endif()
-  endif()
 
   set(draco_header_only_targets draco_compression_attributes_pred_schemes_dec
                                 draco_compression_mesh_traverser
@@ -1049,9 +1008,6 @@ else()
     set_target_properties(dracodec PROPERTIES SOVERSION 1)
     set_target_properties(dracoenc PROPERTIES SOVERSION 1)
     set_target_properties(draco PROPERTIES SOVERSION 1)
-    if(BUILD_UNITY_PLUGIN AND (NOT APPLE))
-      set_target_properties(dracodec_unity PROPERTIES SOVERSION 1)
-    endif()
   endif()
 
   extract_version_string("${draco_src_root}/core/draco_version.h" draco_version)
@@ -1109,9 +1065,6 @@ else()
   # Add install rules for lib and executable targets.
   install(TARGETS dracodec dracoenc draco DESTINATION
                   "${CMAKE_INSTALL_PREFIX}/lib")
-  if(BUILD_UNITY_PLUGIN)
-    install(TARGETS dracodec_unity DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
-  endif()
 
   install(TARGETS draco_decoder draco_encoder DESTINATION
                   "${CMAKE_INSTALL_PREFIX}/bin")
