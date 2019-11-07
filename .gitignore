@@ -1,1 +1,4 @@
+.idea/
 docs/_site
+cmake-build-debug/
+build/
