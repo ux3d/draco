@@ -45,7 +45,6 @@ option(ENABLE_PREDICTIVE_EDGEBREAKER "" ON)
 option(ENABLE_STANDARD_EDGEBREAKER "" ON)
 option(ENABLE_BACKWARDS_COMPATIBILITY "" ON)
 option(ENABLE_DECODER_ATTRIBUTE_DEDUPLICATION "" OFF)
-option(ENABLE_TESTS "Enables tests." OFF)
 option(ENABLE_WASM "" OFF)
 option(ENABLE_WERROR "" OFF)
 option(ENABLE_WEXTRA "" OFF)
@@ -189,42 +188,6 @@ if(EMSCRIPTEN)
         "The EMSCRIPTEN environment variable must be set. See README.md.")
   endif()
 else()
-  if(ENABLE_TESTS)
-    if(MSVC)
-      # Default runtime selected by cmake collides with Googletest settings,
-      # just force all Draco builds to be static (instead of dll/msvcrt).
-      include("${draco_root}/cmake/msvc_runtime.cmake")
-    endif()
-    # Googletest defaults.
-    set(GTEST_SOURCE_DIR
-        "${draco_root}/../googletest"
-        CACHE STRING "Path to googletest source directory")
-    set(
-      GTEST_BUILD_DIR
-      "${draco_build_dir}/googletest"
-      CACHE STRING
-            "Path to directory where googletest will be configured and built.")
-
-    # Confirm Googletest is where expected.
-    if(NOT EXISTS "${GTEST_SOURCE_DIR}/CMakeLists.txt")
-      set(ENABLE_TESTS OFF)
-      message("Tests disabled: Google test CMakeLists.txt does not exist.")
-    else()
-      if(APPLE AND BUILD_SHARED_LIBS)
-        # Silence an RPATH warning emitted during processing of Googletest cmake
-        # files.
-        set(CMAKE_MACOSX_RPATH 1)
-      endif()
-
-      set(DRACO_TEST_DATA_DIR "${draco_root}/testdata")
-      configure_file("${draco_root}/cmake/draco_test_config.h.cmake"
-                     "${draco_build_dir}/testing/draco_test_config.h")
-      add_subdirectory("${GTEST_SOURCE_DIR}" "${GTEST_BUILD_DIR}"
-                       EXCLUDE_FROM_ALL)
-    endif()
-
-    include_directories("${GTEST_SOURCE_DIR}")
-  endif()
 endif()
 
 # Draco source file listing variables.
@@ -583,46 +546,6 @@ set(
   "${draco_src_root}/javascript/emscripten/animation_encoder_webidl_wrapper.cc"
   "${draco_src_root}/javascript/emscripten/draco_animation_encoder_glue_wrapper.cc"
   )
-
-set(
-  draco_test_sources
-  "${draco_src_root}/animation/keyframe_animation_encoding_test.cc"
-  "${draco_src_root}/animation/keyframe_animation_test.cc"
-  "${draco_src_root}/attributes/point_attribute_test.cc"
-  "${draco_src_root}/compression/attributes/point_d_vector_test.cc"
-  "${draco_src_root}/compression/attributes/prediction_schemes/prediction_scheme_normal_octahedron_canonicalized_transform_test.cc"
-  "${draco_src_root}/compression/attributes/prediction_schemes/prediction_scheme_normal_octahedron_transform_test.cc"
-  "${draco_src_root}/compression/attributes/sequential_integer_attribute_encoding_test.cc"
-  "${draco_src_root}/compression/bit_coders/rans_coding_test.cc"
-  "${draco_src_root}/compression/decode_test.cc"
-  "${draco_src_root}/compression/encode_test.cc"
-  "${draco_src_root}/compression/entropy/shannon_entropy_test.cc"
-  "${draco_src_root}/compression/entropy/symbol_coding_test.cc"
-  "${draco_src_root}/compression/mesh/mesh_edgebreaker_encoding_test.cc"
-  "${draco_src_root}/compression/mesh/mesh_encoder_test.cc"
-  "${draco_src_root}/compression/point_cloud/point_cloud_kd_tree_encoding_test.cc"
-  "${draco_src_root}/compression/point_cloud/point_cloud_sequential_encoding_test.cc"
-  "${draco_src_root}/core/buffer_bit_coding_test.cc"
-  "${draco_src_root}/core/draco_test_base.h"
-  "${draco_src_root}/core/draco_test_utils.cc"
-  "${draco_src_root}/core/draco_test_utils.h"
-  "${draco_src_root}/core/draco_tests.cc"
-  "${draco_src_root}/core/math_utils_test.cc"
-  "${draco_src_root}/core/quantization_utils_test.cc"
-  "${draco_src_root}/core/status_test.cc"
-  "${draco_src_root}/core/vector_d_test.cc"
-  "${draco_src_root}/io/obj_decoder_test.cc"
-  "${draco_src_root}/io/obj_encoder_test.cc"
-  "${draco_src_root}/io/ply_decoder_test.cc"
-  "${draco_src_root}/io/ply_reader_test.cc"
-  "${draco_src_root}/io/point_cloud_io_test.cc"
-  "${draco_src_root}/mesh/mesh_are_equivalent_test.cc"
-  "${draco_src_root}/mesh/mesh_cleanup_test.cc"
-  "${draco_src_root}/mesh/triangle_soup_mesh_builder_test.cc"
-  "${draco_src_root}/metadata/metadata_encoder_test.cc"
-  "${draco_src_root}/metadata/metadata_test.cc"
-  "${draco_src_root}/point_cloud/point_cloud_builder_test.cc"
-  "${draco_src_root}/point_cloud/point_cloud_test.cc")
 
 set(draco_version_sources "${draco_build_dir}/draco_version.cc"
                           "${draco_build_dir}/draco_version.h")
@@ -1001,13 +924,6 @@ else()
     file(APPEND "${pkgconfig_file}" "Conflicts:\n")
     file(APPEND "${pkgconfig_file}" "Libs: -L${prefix}/lib -ldraco\n")
     file(APPEND "${pkgconfig_file}" "Cflags: -I${prefix}/include -std=c++11\n")
-  endif()
-
-  if(ENABLE_TESTS)
-    add_executable(draco_tests ${draco_test_sources})
-    include_directories("${draco_build_dir}"
-                        "${GTEST_SOURCE_DIR}/googletest/include")
-    target_link_libraries(draco_tests draco gtest)
   endif()
 
   # Collect all of the header files in the tree, and add an install rule for
