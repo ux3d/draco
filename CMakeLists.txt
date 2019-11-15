@@ -493,28 +493,6 @@ set(draco_core_sources
     "${draco_src_root}/core/varint_encoding.h"
     "${draco_src_root}/core/vector_d.h")
 
-set(draco_io_sources
-    "${draco_src_root}/io/file_utils.cc"
-    "${draco_src_root}/io/file_utils.h"
-    "${draco_src_root}/io/mesh_io.cc"
-    "${draco_src_root}/io/mesh_io.h"
-    "${draco_src_root}/io/obj_decoder.cc"
-    "${draco_src_root}/io/obj_decoder.h"
-    "${draco_src_root}/io/obj_encoder.cc"
-    "${draco_src_root}/io/obj_encoder.h"
-    "${draco_src_root}/io/parser_utils.cc"
-    "${draco_src_root}/io/parser_utils.h"
-    "${draco_src_root}/io/ply_decoder.cc"
-    "${draco_src_root}/io/ply_decoder.h"
-    "${draco_src_root}/io/ply_encoder.cc"
-    "${draco_src_root}/io/ply_encoder.h"
-    "${draco_src_root}/io/ply_property_reader.h"
-    "${draco_src_root}/io/ply_property_writer.h"
-    "${draco_src_root}/io/ply_reader.cc"
-    "${draco_src_root}/io/ply_reader.h"
-    "${draco_src_root}/io/point_cloud_io.cc"
-    "${draco_src_root}/io/point_cloud_io.h")
-
 set(draco_mesh_sources
     "${draco_src_root}/mesh/corner_table.cc"
     "${draco_src_root}/mesh/corner_table.h"
@@ -771,7 +749,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
       ${draco_compression_point_cloud_dec_sources}
       ${draco_core_sources}
       ${draco_dec_config_sources}
-      ${draco_io_sources}
       ${draco_mesh_sources}
       ${draco_metadata_dec_sources}
       ${draco_metadata_sources}
@@ -791,7 +768,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
       ${draco_compression_point_cloud_enc_sources}
       ${draco_core_sources}
       ${draco_enc_config_sources}
-      ${draco_io_sources}
       ${draco_mesh_sources}
       ${draco_metadata_enc_sources}
       ${draco_metadata_sources}
@@ -911,7 +887,6 @@ else()
   add_library(draco_compression_point_cloud_enc
               OBJECT ${draco_compression_point_cloud_enc_sources})
   add_library(draco_core OBJECT ${draco_core_sources})
-  add_library(draco_io OBJECT ${draco_io_sources})
   add_library(draco_mesh OBJECT ${draco_mesh_sources})
   add_library(draco_metadata_dec OBJECT ${draco_metadata_dec_sources})
   add_library(draco_metadata_enc OBJECT ${draco_metadata_enc_sources})
@@ -937,7 +912,6 @@ else()
               $<TARGET_OBJECTS:draco_compression_bit_coders>
               $<TARGET_OBJECTS:draco_core>
               $<TARGET_OBJECTS:draco_dec_config>
-              $<TARGET_OBJECTS:draco_io>
               $<TARGET_OBJECTS:draco_mesh>
               $<TARGET_OBJECTS:draco_metadata>
               $<TARGET_OBJECTS:draco_metadata_dec>
@@ -982,7 +956,6 @@ else()
               $<TARGET_OBJECTS:draco_core>
               $<TARGET_OBJECTS:draco_dec_config>
               $<TARGET_OBJECTS:draco_enc_config>
-              $<TARGET_OBJECTS:draco_io>
               $<TARGET_OBJECTS:draco_mesh>
               $<TARGET_OBJECTS:draco_metadata>
               $<TARGET_OBJECTS:draco_metadata_dec>
@@ -1030,12 +1003,6 @@ else()
     file(APPEND "${pkgconfig_file}" "Cflags: -I${prefix}/include -std=c++11\n")
   endif()
 
-  # Draco app targets.
-  add_executable(draco_decoder "${draco_src_root}/tools/draco_decoder.cc")
-  target_link_libraries(draco_decoder PRIVATE dracodec)
-  add_executable(draco_encoder "${draco_src_root}/tools/draco_encoder.cc")
-  target_link_libraries(draco_encoder PRIVATE draco)
-
   if(ENABLE_TESTS)
     add_executable(draco_tests ${draco_test_sources})
     include_directories("${draco_build_dir}"
@@ -1061,13 +1028,6 @@ else()
     install(FILES "${draco_build_dir}/draco.pc"
             DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
   endif()
-
-  # Add install rules for lib and executable targets.
-  install(TARGETS dracodec dracoenc draco DESTINATION
-                  "${CMAKE_INSTALL_PREFIX}/lib")
-
-  install(TARGETS draco_decoder draco_encoder DESTINATION
-                  "${CMAKE_INSTALL_PREFIX}/bin")
 
   # Generate a CMake config file.
   set(draco_include_install_dir "include/draco")
