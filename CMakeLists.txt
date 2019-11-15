@@ -49,7 +49,6 @@ option(ENABLE_WASM "" OFF)
 option(ENABLE_WERROR "" OFF)
 option(ENABLE_WEXTRA "" OFF)
 option(IGNORE_EMPTY_BUILD_TYPE "" OFF)
-option(BUILD_ANIMATION_ENCODING "" OFF)
 option(BUILD_FOR_GLTF "" OFF)
 option(BUILD_USD_PLUGIN "Build plugin library for USD." OFF)
 
@@ -516,17 +515,6 @@ set(draco_metadata_enc_sources "${draco_src_root}/metadata/metadata_encoder.cc"
 set(draco_metadata_dec_sources "${draco_src_root}/metadata/metadata_decoder.cc"
                                "${draco_src_root}/metadata/metadata_decoder.h")
 
-set(draco_animation_sources "${draco_src_root}/animation/keyframe_animation.cc"
-                            "${draco_src_root}/animation/keyframe_animation.h")
-
-set(draco_animation_enc_sources
-    "${draco_src_root}/animation/keyframe_animation_encoder.cc"
-    "${draco_src_root}/animation/keyframe_animation_encoder.h")
-
-set(draco_animation_dec_sources
-    "${draco_src_root}/animation/keyframe_animation_decoder.cc"
-    "${draco_src_root}/animation/keyframe_animation_decoder.h")
-
 set(draco_js_dec_sources
     "${draco_src_root}/javascript/emscripten/decoder_webidl_wrapper.cc"
     "${draco_src_root}/javascript/emscripten/draco_decoder_glue_wrapper.cc")
@@ -534,18 +522,6 @@ set(draco_js_dec_sources
 set(draco_js_enc_sources
     "${draco_src_root}/javascript/emscripten/draco_encoder_glue_wrapper.cc"
     "${draco_src_root}/javascript/emscripten/encoder_webidl_wrapper.cc")
-
-set(
-  draco_animation_js_dec_sources
-  "${draco_src_root}/javascript/emscripten/animation_decoder_webidl_wrapper.cc"
-  "${draco_src_root}/javascript/emscripten/draco_animation_decoder_glue_wrapper.cc"
-  )
-
-set(
-  draco_animation_js_enc_sources
-  "${draco_src_root}/javascript/emscripten/animation_encoder_webidl_wrapper.cc"
-  "${draco_src_root}/javascript/emscripten/draco_animation_encoder_glue_wrapper.cc"
-  )
 
 set(draco_version_sources "${draco_build_dir}/draco_version.cc"
                           "${draco_build_dir}/draco_version.h")
@@ -584,10 +560,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
       "${draco_src_root}/javascript/emscripten/draco_web_decoder.idl")
   set(draco_js_enc_idl
       "${draco_src_root}/javascript/emscripten/draco_web_encoder.idl")
-  set(draco_animation_js_dec_idl
-      "${draco_src_root}/javascript/emscripten/draco_animation_web_decoder.idl")
-  set(draco_animation_js_enc_idl
-      "${draco_src_root}/javascript/emscripten/draco_animation_web_encoder.idl")
 
   # Generate ${draco_build_dir}/glue_decoder.cpp at cmake generation time so it
   # can be added to targets without cmake reporting errors.
@@ -602,21 +574,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
   if(NOT EXISTS "${draco_build_dir}/glue_decoder.cpp"
      OR NOT EXISTS "${draco_build_dir}/glue_encoder.cpp")
     message(FATAL_ERROR "Glue generation failed.")
-  endif()
-
-  if(BUILD_ANIMATION_ENCODING)
-    execute_process(COMMAND ${PYTHON_EXECUTABLE}
-                            $ENV{EMSCRIPTEN}/tools/webidl_binder.py
-                            ${draco_animation_js_dec_idl}
-                            ${draco_build_dir}/glue_animation_decoder)
-    execute_process(COMMAND ${PYTHON_EXECUTABLE}
-                            $ENV{EMSCRIPTEN}/tools/webidl_binder.py
-                            ${draco_animation_js_enc_idl}
-                            ${draco_build_dir}/glue_animation_encoder)
-    if(NOT EXISTS "${draco_build_dir}/glue_animation_decoder.cpp"
-       OR NOT EXISTS "${draco_build_dir}/glue_animation_encoder.cpp")
-      message(FATAL_ERROR "Animation glue generation failed.")
-    endif()
   endif()
 
   # Add a custom rule depending on the IDL to regenerate
@@ -638,27 +595,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
                      COMMENT "Generating ${draco_build_dir}/glue_encoder.cpp."
                      WORKING_DIRECTORY ${draco_build_dir}
                      VERBATIM)
-
-  if(BUILD_ANIMATION_ENCODING)
-    add_custom_command(
-      OUTPUT ${draco_build_dir}/glue_animation_decoder.cpp
-      COMMAND ${PYTHON_EXECUTABLE} $ENV{EMSCRIPTEN}/tools/webidl_binder.py
-              ${draco_animation_js_dec_idl}
-              ${draco_build_dir}/glue_animation_decoder
-      DEPENDS ${draco_animation_js_dec_idl}
-      COMMENT "Generating ${draco_build_dir}/glue_animation_decoder.cpp."
-      WORKING_DIRECTORY ${draco_build_dir}
-      VERBATIM)
-    add_custom_command(
-      OUTPUT ${draco_build_dir}/glue_animation_encoder.cpp
-      COMMAND ${PYTHON_EXECUTABLE} $ENV{EMSCRIPTEN}/tools/webidl_binder.py
-              ${draco_animation_js_enc_idl}
-              ${draco_build_dir}/glue_animation_encoder
-      DEPENDS ${draco_animation_js_enc_idl}
-      COMMENT "Generating ${draco_build_dir}/glue_animation_encoder.cpp."
-      WORKING_DIRECTORY ${draco_build_dir}
-      VERBATIM)
-  endif()
 
   set(draco_decoder_src
       ${draco_attributes_sources}
@@ -736,44 +672,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
   em_link_post_js(draco_encoder "${draco_build_dir}/glue_encoder.js"
                   "${draco_src_root}/javascript/emscripten/finalize.js")
 
-  if(BUILD_ANIMATION_ENCODING)
-    add_executable(draco_animation_decoder ${draco_animation_dec_sources}
-                                           ${draco_animation_js_dec_sources}
-                                           ${draco_animation_sources}
-                                           ${draco_decoder_src})
-    add_executable(draco_animation_encoder ${draco_animation_enc_sources}
-                                           ${draco_animation_js_enc_sources}
-                                           ${draco_animation_sources}
-                                           ${draco_encoder_src})
-    append_link_flag_to_target(
-      draco_animation_decoder
-      "-s EXPORT_NAME=\"'DracoAnimationDecoderModule'\"")
-    append_link_flag_to_target(
-      draco_animation_encoder
-      "-s EXPORT_NAME=\"'DracoAnimationEncoderModule'\"")
-
-    set_property(SOURCE ${draco_js_sources}
-                 APPEND
-                 PROPERTY OBJECT_DEPENDS
-                          ${draco_build_dir}/glue_animation_decoder.cpp)
-    em_link_pre_js(draco_animation_decoder
-                   "${draco_src_root}/javascript/emscripten/prepareCallbacks.js"
-                   "${draco_src_root}/javascript/emscripten/version.js")
-    em_link_post_js(draco_animation_decoder
-                    "${draco_build_dir}/glue_animation_decoder.js"
-                    "${draco_src_root}/javascript/emscripten/finalize.js")
-
-    set_property(SOURCE ${draco_js_enc_sources}
-                 APPEND
-                 PROPERTY OBJECT_DEPENDS
-                          ${draco_build_dir}/glue_animation_encoder.cpp)
-    em_link_pre_js(draco_animation_encoder
-                   "${draco_src_root}/javascript/emscripten/prepareCallbacks.js"
-                   "${draco_src_root}/javascript/emscripten/version.js")
-    em_link_post_js(draco_animation_encoder
-                    "${draco_build_dir}/glue_animation_encoder.js"
-                    "${draco_src_root}/javascript/emscripten/finalize.js")
-  endif()
 else()
   # Standard Draco libs, encoder and decoder. Object collections that mirror the
   # Draco directory structure.
@@ -814,9 +712,6 @@ else()
   add_library(draco_metadata_dec OBJECT ${draco_metadata_dec_sources})
   add_library(draco_metadata_enc OBJECT ${draco_metadata_enc_sources})
   add_library(draco_metadata OBJECT ${draco_metadata_sources})
-  add_library(draco_animation_dec OBJECT ${draco_animation_dec_sources})
-  add_library(draco_animation_enc OBJECT ${draco_animation_enc_sources})
-  add_library(draco_animation OBJECT ${draco_animation_sources})
   add_library(draco_point_cloud OBJECT ${draco_point_cloud_sources})
   add_library(draco_points_dec OBJECT ${draco_points_common_sources}
                                ${draco_points_dec_sources})
@@ -838,8 +733,6 @@ else()
               $<TARGET_OBJECTS:draco_mesh>
               $<TARGET_OBJECTS:draco_metadata>
               $<TARGET_OBJECTS:draco_metadata_dec>
-              $<TARGET_OBJECTS:draco_animation>
-              $<TARGET_OBJECTS:draco_animation_dec>
               $<TARGET_OBJECTS:draco_point_cloud>
               $<TARGET_OBJECTS:draco_points_dec>)
   add_library(dracoenc
@@ -857,8 +750,6 @@ else()
               $<TARGET_OBJECTS:draco_mesh>
               $<TARGET_OBJECTS:draco_metadata>
               $<TARGET_OBJECTS:draco_metadata_enc>
-              $<TARGET_OBJECTS:draco_animation>
-              $<TARGET_OBJECTS:draco_animation_enc>
               $<TARGET_OBJECTS:draco_point_cloud>
               $<TARGET_OBJECTS:draco_points_enc>)
   add_library(draco
@@ -883,9 +774,6 @@ else()
               $<TARGET_OBJECTS:draco_metadata>
               $<TARGET_OBJECTS:draco_metadata_dec>
               $<TARGET_OBJECTS:draco_metadata_enc>
-              $<TARGET_OBJECTS:draco_animation>
-              $<TARGET_OBJECTS:draco_animation_dec>
-              $<TARGET_OBJECTS:draco_animation_enc>
               $<TARGET_OBJECTS:draco_point_cloud>
               $<TARGET_OBJECTS:draco_points_dec>
               $<TARGET_OBJECTS:draco_points_enc>)
