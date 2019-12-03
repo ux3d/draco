@@ -19,7 +19,6 @@
 
 #include "draco/attributes/attribute_transform.h"
 #include "draco/attributes/point_attribute.h"
-#include "draco/core/encoder_buffer.h"
 
 namespace draco {
 
@@ -43,10 +42,7 @@ class AttributeQuantizationTransform : public AttributeTransform {
   bool ComputeParameters(const PointAttribute &attribute,
                          const int quantization_bits);
 
-  // Encode relevant parameters into buffer.
-  bool EncodeParameters(EncoderBuffer *encoder_buffer) const;
-
-  int32_t quantization_bits() const { return quantization_bits_; }
+    int32_t quantization_bits() const { return quantization_bits_; }
   float min_value(int axis) const { return min_values_[axis]; }
   const std::vector<float> &min_values() const { return min_values_; }
   float range() const { return range_; }

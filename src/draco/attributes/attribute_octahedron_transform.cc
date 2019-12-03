@@ -41,15 +41,6 @@ void AttributeOctahedronTransform::SetParameters(int quantization_bits) {
   quantization_bits_ = quantization_bits;
 }
 
-bool AttributeOctahedronTransform::EncodeParameters(
-    EncoderBuffer *encoder_buffer) const {
-  if (is_initialized()) {
-    encoder_buffer->Encode(static_cast<uint8_t>(quantization_bits_));
-    return true;
-  }
-  return false;
-}
-
 std::unique_ptr<PointAttribute>
 AttributeOctahedronTransform::GeneratePortableAttribute(
     const PointAttribute &attribute, const std::vector<PointIndex> &point_ids,
