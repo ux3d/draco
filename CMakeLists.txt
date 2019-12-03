@@ -329,12 +329,6 @@ set(draco_compression_bit_coders_sources
     "${draco_src_root}/compression/bit_coders/symbol_bit_encoder.cc"
     "${draco_src_root}/compression/bit_coders/symbol_bit_encoder.h")
 
-set(draco_enc_config_sources
-    "${draco_src_root}/compression/config/compression_shared.h"
-    "${draco_src_root}/compression/config/draco_options.h"
-    "${draco_src_root}/compression/config/encoder_options.h"
-    "${draco_src_root}/compression/config/encoding_features.h")
-
 set(draco_dec_config_sources
     "${draco_src_root}/compression/config/compression_shared.h"
     "${draco_src_root}/compression/config/decoder_options.h"
@@ -637,7 +631,6 @@ else()
               OBJECT ${draco_compression_attributes_pred_schemes_enc_sources})
   add_library(draco_compression_bit_coders
               OBJECT ${draco_compression_bit_coders_sources})
-  add_library(draco_enc_config OBJECT ${draco_enc_config_sources})
   add_library(draco_dec_config OBJECT ${draco_dec_config_sources})
   add_library(draco_compression_decode OBJECT
                                        ${draco_compression_decode_sources})
@@ -683,23 +676,6 @@ else()
               $<TARGET_OBJECTS:draco_metadata_dec>
               $<TARGET_OBJECTS:draco_point_cloud>
               $<TARGET_OBJECTS:draco_points_dec>)
-  add_library(dracoenc
-              ${draco_version_sources}
-              $<TARGET_OBJECTS:draco_attributes>
-              $<TARGET_OBJECTS:draco_compression_attributes_enc>
-              $<TARGET_OBJECTS:draco_compression_entropy>
-              $<TARGET_OBJECTS:draco_compression_attributes_pred_schemes_enc>
-              $<TARGET_OBJECTS:draco_compression_bit_coders>
-              $<TARGET_OBJECTS:draco_compression_encode>
-              $<TARGET_OBJECTS:draco_compression_mesh_enc>
-              $<TARGET_OBJECTS:draco_compression_point_cloud_enc>
-              $<TARGET_OBJECTS:draco_core>
-              $<TARGET_OBJECTS:draco_enc_config>
-              $<TARGET_OBJECTS:draco_mesh>
-              $<TARGET_OBJECTS:draco_metadata>
-              $<TARGET_OBJECTS:draco_metadata_enc>
-              $<TARGET_OBJECTS:draco_point_cloud>
-              $<TARGET_OBJECTS:draco_points_enc>)
   add_library(draco
               ${draco_version_sources}
               $<TARGET_OBJECTS:draco_attributes>
@@ -717,7 +693,6 @@ else()
               $<TARGET_OBJECTS:draco_compression_point_cloud_enc>
               $<TARGET_OBJECTS:draco_core>
               $<TARGET_OBJECTS:draco_dec_config>
-              $<TARGET_OBJECTS:draco_enc_config>
               $<TARGET_OBJECTS:draco_mesh>
               $<TARGET_OBJECTS:draco_metadata>
               $<TARGET_OBJECTS:draco_metadata_dec>
@@ -728,7 +703,7 @@ else()
 
   set(draco_header_only_targets draco_compression_attributes_pred_schemes_dec
                                 draco_compression_mesh_traverser
-                                draco_dec_config draco_enc_config)
+                                draco_dec_config)
 
   # For now, enable deduplication for both encoder and decoder.
   # TODO(ostava): Support for disabling attribute deduplication for the C++
@@ -738,7 +713,6 @@ else()
 
   if(BUILD_SHARED_LIBS)
     set_target_properties(dracodec PROPERTIES SOVERSION 1)
-    set_target_properties(dracoenc PROPERTIES SOVERSION 1)
     set_target_properties(draco PROPERTIES SOVERSION 1)
   endif()
 
