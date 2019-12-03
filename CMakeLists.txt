@@ -519,10 +519,6 @@ set(draco_js_dec_sources
     "${draco_src_root}/javascript/emscripten/decoder_webidl_wrapper.cc"
     "${draco_src_root}/javascript/emscripten/draco_decoder_glue_wrapper.cc")
 
-set(draco_js_enc_sources
-    "${draco_src_root}/javascript/emscripten/draco_encoder_glue_wrapper.cc"
-    "${draco_src_root}/javascript/emscripten/encoder_webidl_wrapper.cc")
-
 set(draco_version_sources "${draco_build_dir}/draco_version.cc"
                           "${draco_build_dir}/draco_version.h")
 
@@ -558,8 +554,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
 
   set(draco_js_dec_idl
       "${draco_src_root}/javascript/emscripten/draco_web_decoder.idl")
-  set(draco_js_enc_idl
-      "${draco_src_root}/javascript/emscripten/draco_web_encoder.idl")
 
   # Generate ${draco_build_dir}/glue_decoder.cpp at cmake generation time so it
   # can be added to targets without cmake reporting errors.
@@ -567,12 +561,7 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
                           $ENV{EMSCRIPTEN}/tools/webidl_binder.py
                           ${draco_js_dec_idl} ${draco_build_dir}/glue_decoder)
 
-  execute_process(COMMAND ${PYTHON_EXECUTABLE}
-                          $ENV{EMSCRIPTEN}/tools/webidl_binder.py
-                          ${draco_js_enc_idl} ${draco_build_dir}/glue_encoder)
-
-  if(NOT EXISTS "${draco_build_dir}/glue_decoder.cpp"
-     OR NOT EXISTS "${draco_build_dir}/glue_encoder.cpp")
+  if(NOT EXISTS "${draco_build_dir}/glue_decoder.cpp")
     message(FATAL_ERROR "Glue generation failed.")
   endif()
 
@@ -584,15 +573,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
                              ${draco_js_dec_idl} ${draco_build_dir}/glue_decoder
                      DEPENDS ${draco_js_dec_idl}
                      COMMENT "Generating ${draco_build_dir}/glue_decoder.cpp."
-                     WORKING_DIRECTORY ${draco_build_dir}
-                     VERBATIM)
-
-  add_custom_command(OUTPUT ${draco_build_dir}/glue_encoder.cpp
-                     COMMAND ${PYTHON_EXECUTABLE}
-                             $ENV{EMSCRIPTEN}/tools/webidl_binder.py
-                             ${draco_js_enc_idl} ${draco_build_dir}/glue_encoder
-                     DEPENDS ${draco_js_enc_idl}
-                     COMMENT "Generating ${draco_build_dir}/glue_encoder.cpp."
                      WORKING_DIRECTORY ${draco_build_dir}
                      VERBATIM)
 
@@ -615,37 +595,10 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
       ${draco_points_dec_sources}
       ${draco_version_sources})
 
-  set(draco_encoder_src
-      ${draco_attributes_sources}
-      ${draco_compression_attributes_enc_sources}
-      ${draco_compression_attributes_pred_schemes_enc_sources}
-      ${draco_compression_bit_coders_sources}
-      ${draco_compression_encode_sources}
-      ${draco_compression_entropy_sources}
-      ${draco_compression_mesh_traverser_sources}
-      ${draco_compression_mesh_enc_sources}
-      ${draco_compression_point_cloud_enc_sources}
-      ${draco_core_sources}
-      ${draco_enc_config_sources}
-      ${draco_mesh_sources}
-      ${draco_metadata_enc_sources}
-      ${draco_metadata_sources}
-      ${draco_point_cloud_sources}
-      ${draco_points_enc_sources}
-      ${draco_version_sources})
-
   add_executable(draco_decoder ${draco_js_dec_sources} ${draco_decoder_src})
   append_link_flag_to_target(draco_decoder
                              "-s EXPORT_NAME=\"'DracoDecoderModule'\"")
 
-  add_executable(draco_encoder ${draco_js_enc_sources} ${draco_encoder_src})
-  append_link_flag_to_target(draco_encoder
-                             "-s EXPORT_NAME=\"'DracoEncoderModule'\"")
-
-  draco_enable_feature(FEATURE DRACO_ATTRIBUTE_INDICES_DEDUPLICATION_SUPPORTED
-                       TARGETS draco_encoder)
-  draco_enable_feature(FEATURE DRACO_ATTRIBUTE_VALUES_DEDUPLICATION_SUPPORTED
-                       TARGETS draco_encoder)
   if(ENABLE_DECODER_ATTRIBUTE_DEDUPLICATION)
     draco_enable_feature(FEATURE DRACO_ATTRIBUTE_INDICES_DEDUPLICATION_SUPPORTED
                          TARGETS draco_decoder)
@@ -666,11 +619,6 @@ if(EMSCRIPTEN AND ENABLE_JS_GLUE)
   set_property(SOURCE ${draco_js_enc_sources}
                APPEND
                PROPERTY OBJECT_DEPENDS ${draco_build_dir}/glue_encoder.cpp)
-  em_link_pre_js(draco_encoder
-                 "${draco_src_root}/javascript/emscripten/prepareCallbacks.js"
-                 "${draco_src_root}/javascript/emscripten/version.js")
-  em_link_post_js(draco_encoder "${draco_build_dir}/glue_encoder.js"
-                  "${draco_src_root}/javascript/emscripten/finalize.js")
 
 else()
   # Standard Draco libs, encoder and decoder. Object collections that mirror the
