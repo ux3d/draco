@@ -100,18 +100,6 @@ bool AttributeQuantizationTransform::ComputeParameters(
   return true;
 }
 
-bool AttributeQuantizationTransform::EncodeParameters(
-    EncoderBuffer *encoder_buffer) const {
-  if (is_initialized()) {
-    encoder_buffer->Encode(min_values_.data(),
-                           sizeof(float) * min_values_.size());
-    encoder_buffer->Encode(range_);
-    encoder_buffer->Encode(static_cast<uint8_t>(quantization_bits_));
-    return true;
-  }
-  return false;
-}
-
 std::unique_ptr<PointAttribute>
 AttributeQuantizationTransform::GeneratePortableAttribute(
     const PointAttribute &attribute, int num_points) const {
