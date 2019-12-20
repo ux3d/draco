@@ -18,6 +18,7 @@
 
 #include "draco/attributes/attribute_transform.h"
 #include "draco/attributes/point_attribute.h"
+#include "draco/core/encoder_buffer.h"
 
 namespace draco {
 
@@ -38,6 +39,9 @@ class AttributeOctahedronTransform : public AttributeTransform {
 
   // Set number of quantization bits.
   void SetParameters(int quantization_bits);
+
+  // Encode relevant parameters into buffer.
+  bool EncodeParameters(EncoderBuffer *encoder_buffer) const;
 
   bool is_initialized() const { return quantization_bits_ != -1; }
   int32_t quantization_bits() const { return quantization_bits_; }
