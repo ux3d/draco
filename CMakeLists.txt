@@ -35,6 +35,7 @@ include("${draco_root}/cmake/draco_tests.cmake")
 include("${draco_root}/cmake/sanitizers.cmake")
 include("${draco_root}/cmake/util.cmake")
 
+option(DRACO_ENABLE_INSTALL "Enable installation of draco." OFF)
 option(ENABLE_CCACHE "Enable ccache support." OFF)
 option(ENABLE_DISTCC "Enable distcc support." OFF)
 option(ENABLE_EXTRA_SPEED "" OFF)
@@ -1064,6 +1065,7 @@ else()
     draco_setup_test_targets()
   endif()
 
+  if(DRACO_ENABLE_INSTALL)
   # Collect all of the header files in the tree, and add an install rule for
   # each.
   file(GLOB_RECURSE draco_headers RELATIVE ${draco_root}/src/draco "*.h")
@@ -1129,6 +1131,8 @@ else()
                                  "${draco_build_dir}/DracoConfigVersion.cmake")
   install(FILES ${draco_cmake_helper_scripts}
           DESTINATION "${draco_script_install_dir}")
+
+  endif()
 
   # Some generators complain about unknown link language for header only
   # targets. Silence the harmless warnings/errors with some dummy source files.
