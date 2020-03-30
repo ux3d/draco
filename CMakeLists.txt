@@ -202,6 +202,10 @@ if(EMSCRIPTEN)
 endif()
 
 # Draco source file listing variables.
+
+set(draco_sources
+    "${draco_src_root}/draco.cc")
+
 set(draco_attributes_sources
     "${draco_src_root}/attributes/attribute_octahedron_transform.cc"
     "${draco_src_root}/attributes/attribute_octahedron_transform.h"
@@ -894,7 +898,9 @@ else()
               $<TARGET_OBJECTS:draco_animation>
               $<TARGET_OBJECTS:draco_animation_dec>
               $<TARGET_OBJECTS:draco_point_cloud>
-              $<TARGET_OBJECTS:draco_points_dec>)
+              $<TARGET_OBJECTS:draco_points_dec>
+              ${draco_sources})
+
   add_library(dracoenc
               $<TARGET_OBJECTS:draco_attributes>
               $<TARGET_OBJECTS:draco_compression_attributes_enc>
@@ -912,7 +918,8 @@ else()
               $<TARGET_OBJECTS:draco_animation>
               $<TARGET_OBJECTS:draco_animation_enc>
               $<TARGET_OBJECTS:draco_point_cloud>
-              $<TARGET_OBJECTS:draco_points_enc>)
+              $<TARGET_OBJECTS:draco_points_enc>
+              ${draco_sources})
   add_library(draco
               $<TARGET_OBJECTS:draco_attributes>
               $<TARGET_OBJECTS:draco_compression_attributes_dec>
@@ -940,7 +947,8 @@ else()
               $<TARGET_OBJECTS:draco_animation_enc>
               $<TARGET_OBJECTS:draco_point_cloud>
               $<TARGET_OBJECTS:draco_points_dec>
-              $<TARGET_OBJECTS:draco_points_enc>)
+              $<TARGET_OBJECTS:draco_points_enc>
+              ${draco_sources})
   if(BUILD_UNITY_PLUGIN)
     set(unity_decoder_lib_type MODULE)
     if(IOS)
